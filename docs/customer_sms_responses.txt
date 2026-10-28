@@ -1,0 +1,68 @@
+# MysteryBox - Customer SMS Responses (key:value)
+# Source: config/messages.php + code fallbacks
+# Date: 2026-09-15
+
+# OTP
+otp.sms_message: Your OTP code is: {otp_code}. Valid for {expiry_minutes} minutes. Do not share this code with anyone.
+
+# Welcome / Subscription
+sms.welcome_message: Karibu kwenye Box la Ushindi! Shinda pesa hadi sehemu ya sh 50,000,000, Salio la mpaka sh 50,000, simu janja na zawadi KIBAAO. Chagua na lipia sanduku la bahati
+sms.welcome_again_message: Karibu tena mchezoni! Shinda pesa hadi sehemu ya sh 50,000,000, Salio la mpaka sh 50,000, simu janja na zawadi KIBAAO. Chagua na lipia sanduku la bahati
+sms.terms_message: Unashauriwa kupitia vigezo na mashart ili kuelewa mchezo kiundani. Bofya hapa kupitia. https://www.boxlaushindi.co.tz/terms
+sms.unsubscription_message: Umefanikiwa kujiondoa kwenye huduma yetu. Asante kwa kutumia huduma zetu.
+
+# Box selection / Help / Invalid
+sms.box_selection_header: Chagua namba ya box. Mfano: 1
+sms.box_selection_footer: Tuma namba ya box.
+sms.help_message: Jinsi ya kushiriki Mystery Box: Tuma neno BOX ili kuona chaguzi.
+sms.points_message: Salio lako ni points: {points}
+sms.invalid_response: Chaguo lako sio sahihi. Tuma neno BOX kwenda 15099 upate orodha ya masanduku yaliyopo. Chagua namba ya sanduku la bahati yako ubahatishe zawadi mbali mbali.
+sms.invalid_sequence: Chaguo sio sahihi, Anza kwa kutuma neno BOX kupata orodha ya masanduku yaliyopo.
+sms.no_mystery_box_found: Hakuna Box iliopatikana kwa ajili ya kufunguliwa.
+sms.no_mixx_payment_box_found: Hakuna Mystery Box ya Mixx Payment iliyopatikana kwa nambari yako.
+sms.box_opening_error: Kuna tatizo katika kufungua Mystery Box yako. Tafadhali jaribu tena baadaye.
+
+# Payment
+sms.payment_success: Malipo yamefanikiwa. Tafadhali subiri kidogo.
+sms.payment_failed: Malipo yameshindwa. Tafadhali jaribu tena.
+sms.low_balance: Salio lako halitoshi. Tafadhali ongeza salio au piga *147*00# chagua Niwezeshe ukope salio na ujaribu tena kuchagua BOX la ushindi.
+
+# Renewal
+sms.success_renewal_sms: Hongera umezawadiwa nafasi ya kufungua sanduku la Shaba, Tuma neno FUNGUA na unaweza kujishindia zawaidi kemkem.
+
+# Box award notifications
+sms.mystery_box_award: Hongera! Yas imekupa nafasi ya kufungua Mystery Box ya %s. Tafadhali tembelea Mix App kufungua Box yako
+sms.mystery_box_award_mixx_payment: Hongera! Yas imekupa nafasi ya kufungua Mystery Box ya %s. Tafadhali tuma neno WIN kufungua Box yako
+
+# Box open results
+sms.box_win_loyalty_only: {prize}, Fungua sanduka zaidi kwa zawadi zaidi.
+sms.box_win_with_other_rewards: {prefix} {prize}, Fungua sanduka zaidi kwa zawadi zaidi.
+sms.box_win_prefix_airtime_cash: Umeshinda
+sms.box_win_prefix_other: Umeingia
+sms.box_loss: Asante kwa kushiriki! Jaribu tena baadae.
+
+# Reward format fragments (used inside win SMS)
+sms.reward_formats.airtime: salio la Tsh {amount}
+sms.reward_formats.cash: pesa taslim Tsh {amount}
+sms.reward_formats.jackpot_entry: DROO ya {jackpot}
+sms.reward_formats.loyalty_points: umezawadiwa point {points} pekee
+sms.loyalty_points_prefix: pia 
+sms.jackpot_periods.daily: siku
+sms.jackpot_periods.weekly: wiki
+sms.jackpot_periods.monthly: mwezi
+sms.jackpot_connectors.middle: , ya 
+sms.jackpot_connectors.last:  na ya 
+
+# Points redemption
+sms.redeem.header: Una Points
+sms.redeem.open_text: Kufungua
+sms.redeem.points_text: ni point
+sms.redeem.footer: Tuma namba ya chaguo kufungua sanduku. Mfano: 1
+sms.redeem.points_used_prefix: Umetumia point zako {redeem_points} na
+sms.redeem.low_points: Huna point za kutosha kufungua sanduku, kusanya point kuanzia 100 ili uweze kufungua sanduku. Tuma neno BOX kununua sanduku upate POINT na ubahatishe MAMAILIONI
+sms.redeem.invalid_choice: Chaguo si sahihi. Tuma namba sahihi ya box unayotaka kufungua.
+sms.redeem.success: Box imefunguliwa kwa mafanikio! Tazama zawadi yako.
+
+# Mystery box API messages sometimes also sent via SMS
+mystery_box.error.invalid: Invalid or already opened mystery box.
+mystery_box.error.already_opened: This box has already been opened.

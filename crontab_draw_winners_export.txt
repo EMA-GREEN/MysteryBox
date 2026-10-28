@@ -1,0 +1,28 @@
+# Crontab entry for ExportDrawWinners command
+# This runs at 00:00 (midnight) every day to export draw winners
+
+# Option 1: Basic (no logging)
+0 0 * * * cd /var/www/html/MysteryBox && php artisan winners:export-draws >> /dev/null 2>&1
+
+# Option 2: With logging (recommended)
+0 0 * * * cd /var/www/html/MysteryBox && php artisan winners:export-draws >> /var/www/html/MysteryBox/storage/logs/draw-winners-export.log 2>&1
+
+# Option 3: With date-based log file (creates separate log per day)
+0 0 * * * cd /var/www/html/MysteryBox && php artisan winners:export-draws >> /var/www/html/MysteryBox/storage/logs/draw-winners-export-$(date +\%Y-\%m-\%d).log 2>&1
+
+# Option 4: With full path to PHP (if PHP is not in system PATH)
+0 0 * * * cd /var/www/html/MysteryBox && /usr/bin/php artisan winners:export-draws >> /var/www/html/MysteryBox/storage/logs/draw-winners-export.log 2>&1
+
+# Option 5: Run specific period only (e.g., daily only)
+# 0 0 * * * cd /var/www/html/MysteryBox && php artisan winners:export-draws --period=daily >> /var/www/html/MysteryBox/storage/logs/draw-winners-export.log 2>&1
+
+# To add to crontab:
+# 1. Copy one of the lines above (recommend Option 2 or 3)
+# 2. Run: crontab -e
+# 3. Paste the line
+# 4. Save and exit
+
+# To verify cron is working:
+# tail -f /var/log/cron
+# tail -f /var/www/html/MysteryBox/storage/logs/draw-winners-export.log
+

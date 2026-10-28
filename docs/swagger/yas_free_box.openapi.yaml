@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: MysteryBox API
+  version: 1.0.0
+  description: MysteryBox backend API — Yas Free Box endpoints (Mixx App / Yas App)
+servers:
+  - url: http://188.64.188.232/mysteryboxapi/router.php/api
+    description: MysteryBox API sample host
+tags:
+  - name: Yas Free Box
+    description: Yas free box for Mixx App and Yas App (2 opens/day, position-based wins)
+paths:
+  /yas/free-box/status:
+    get:
+      tags: [Yas Free Box]
+      operationId: yasFreeBoxStatus
+      summary: Get Yas free box daily status
+      parameters:
+        - name: msisdn
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "255712345678"
+        - name: source
+          in: query
+          required: true
+          description: App redirect source
+          schema:
+            type: string
+            enum: [mixx_app, yas_app]
+            example: mixx_app
+      responses:
+        "200":
+          description: Status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YasFreeBoxStatusResponse"
+        "422":
+          description: Validation error
+        "500":
+          description: Server error
+    post:
+      tags: [Yas Free Box]
+      operationId: yasFreeBoxStatusPost
+      summary: Get Yas free box daily status (POST)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [msisdn, source]
+              properties:
+                msisdn:
+                  type: string
+                  example: "255712345678"
+                source:
+                  type: string
+                  enum: [mixx_app, yas_app]
+                  example: mixx_app
+      responses:
+        "200":
+          description: Status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YasFreeBoxStatusResponse"
+        "422":
+          description: Validation error
+        "500":
+          description: Server error
+  /yas/free-box/open:
+    post:
+      tags: [Yas Free Box]
+      operationId: yasFreeBoxOpen
+      summary: Open Yas free box
+      description: >
+        Atomically assigns today's open_index, enforces 2 opens/MSISDN/day,
+        awards position-based wins (every 500th up to 6 winners @ TSh 5000),
+        stores source (mixx_app|yas_app), and enqueues Payscoop wallet payout on win.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [msisdn, source]
+              properties:
+                msisdn:
+                  type: string
+                  example: "255712345678"
+                source:
+                  type: string
+                  enum: [mixx_app, yas_app]
+                  example: mixx_app
+                request_id:
+                  type: string
+                  nullable: true
+                  example: YASF25571234567820260916123000ABC123
+      responses:
+        "200":
+          description: Open result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YasFreeBoxOpenResponse"
+        "403":
+          description: Feature disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YasFreeBoxError"
+              example:
+                status: error
+                code: YAS_FREE_BOX_DISABLED
+                message: Yas free box is disabled
+        "429":
+          description: Daily free-box limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YasFreeBoxError"
+              example:
+                status: error
+                code: DAILY_LIMIT_REACHED
+                message: Free box openings for today are finished
+        "422":
+          description: Validation error
+        "500":
+          description: Server error
+components:
+  schemas:
+    YasFreeBoxStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            free_box_active:
+              type: boolean
+              example: true
+            opens_used:
+              type: integer
+              example: 0
+            opens_remaining:
+              type: integer
+              example: 2
+            daily_limit:
+              type: integer
+              example: 2
+            source:
+              type: string
+              enum: [mixx_app, yas_app]
+              example: mixx_app
+            source_label:
+              type: string
+              example: Mixx App
+            boxes:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    example: YasFree
+                  display_name:
+                    type: string
+                    example: Bure
+                  amount:
+                    type: number
+                    example: 0
+                  active:
+                    type: boolean
+                    example: true
+                  free:
+                    type: boolean
+                    example: true
+                  source:
+                    type: string
+                    example: mixx_app
+    YasFreeBoxOpenResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        data:
+          type: object
+          properties:
+            result:
+              type: string
+              enum: [win, loss]
+              example: win
+            open_index:
+              type: integer
+              example: 500
+            prize_amount:
+              type: number
+              example: 5000
+            prize_type:
+              type: string
+              nullable: true
+              example: cash
+            opens_remaining:
+              type: integer
+              example: 1
+            source:
+              type: string
+              enum: [mixx_app, yas_app]
+              example: mixx_app
+            message:
+              type: string
+              example: Umeshinda Tsh 5,000
+            request_id:
+              type: string
+              example: YASF25571234567820260916123000ABC123
+    YasFreeBoxError:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        code:
+          type: string
+        message:
+          type: string

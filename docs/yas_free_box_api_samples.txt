@@ -1,0 +1,200 @@
+Yas Free Box API - Sample Requests & Responses
+==============================================
+Audience: Boxilaushindi portal (receives redirects from Mixx App / Yas App)
+Base URL (sample): http://188.64.188.232/mysteryboxapi/router.php/api
+
+source values:
+  - yas_app   = customer came from Yas App (required for now)
+  - mixx_app  = Mixx App (configured but disabled for now)
+
+
+--------------------------------------------------------------------------------
+1) CHECK FREE-BOX STATUS
+--------------------------------------------------------------------------------
+
+Method: GET
+URL:
+http://188.64.188.232/mysteryboxapi/router.php/api/yas/free-box/status?msisdn=255712345678&source=yas_app
+
+Also supported as POST:
+URL:
+http://188.64.188.232/mysteryboxapi/router.php/api/yas/free-box/status
+
+Sample request body (POST):
+{
+  "msisdn": "255712345678",
+  "source": "yas_app"
+}
+
+Sample success response (200):
+{
+  "status": "success",
+  "data": {
+    "free_box_active": true,
+    "opens_used": 0,
+    "opens_remaining": 2,
+    "daily_limit": 2,
+    "source": "yas_app",
+    "source_label": "Yas App",
+    "boxes": [
+      {
+        "type": "YasFree",
+        "display_name": "Bure",
+        "amount": 0,
+        "active": true,
+        "free": true,
+        "source": "yas_app"
+      },
+      {
+        "type": "Bronze",
+        "display_name": "Shaba",
+        "amount": 300,
+        "active": true,
+        "free": false
+      },
+      {
+        "type": "Silver",
+        "display_name": "Fedha",
+        "amount": 500,
+        "active": true,
+        "free": false
+      },
+      {
+        "type": "Gold",
+        "display_name": "Dhahabu",
+        "amount": 1000,
+        "active": true,
+        "free": false
+      },
+      {
+        "type": "Platinum",
+        "display_name": "Platinum",
+        "amount": 5000,
+        "active": true,
+        "free": false
+      },
+      {
+        "type": "Diamond",
+        "display_name": "Almasi",
+        "amount": 10000,
+        "active": true,
+        "free": false
+      }
+    ]
+  }
+}
+
+When daily free opens are finished (still 200):
+{
+  "status": "success",
+  "data": {
+    "free_box_active": false,
+    "opens_used": 2,
+    "opens_remaining": 0,
+    "daily_limit": 2,
+    "source": "yas_app",
+    "source_label": "Yas App",
+    "boxes": [
+      {
+        "type": "YasFree",
+        "display_name": "Bure",
+        "amount": 0,
+        "active": false,
+        "free": true,
+        "source": "yas_app"
+      }
+    ]
+  }
+}
+
+
+--------------------------------------------------------------------------------
+2) OPEN FREE BOX
+--------------------------------------------------------------------------------
+
+Method: POST
+URL:
+http://188.64.188.232/mysteryboxapi/router.php/api/yas/free-box/open
+
+Sample request body (loss):
+{
+  "msisdn": "255712345678",
+  "source": "yas_app",
+  "request_id": "optional-client-id-001"
+}
+
+Sample success response — no win (200):
+{
+  "status": "success",
+  "data": {
+    "result": "loss",
+    "open_index": 501,
+    "prize_amount": 0,
+    "prize_type": null,
+    "opens_remaining": 1,
+    "source": "yas_app",
+    "message": "Asante kwa kushiriki",
+    "request_id": "optional-client-id-001"
+  }
+}
+
+Sample request body (win example, e.g. open position 500):
+{
+  "msisdn": "255798765432",
+  "source": "yas_app"
+}
+
+Sample success response — win (200):
+{
+  "status": "success",
+  "data": {
+    "result": "win",
+    "open_index": 500,
+    "prize_amount": 5000,
+    "prize_type": "cash",
+    "opens_remaining": 1,
+    "source": "yas_app",
+    "message": "Umeshinda Tsh 5,000",
+    "request_id": "YASF25579876543220260916123045ABCDEF"
+  }
+}
+
+
+--------------------------------------------------------------------------------
+3) ERROR SAMPLES
+--------------------------------------------------------------------------------
+
+Daily limit already used (429):
+POST http://188.64.188.232/mysteryboxapi/router.php/api/yas/free-box/open
+
+{
+  "status": "error",
+  "code": "DAILY_LIMIT_REACHED",
+  "message": "Free box openings for today are finished"
+}
+
+Feature disabled (403):
+{
+  "status": "error",
+  "code": "YAS_FREE_BOX_DISABLED",
+  "message": "Yas free box is disabled"
+}
+
+Invalid / missing source (422):
+{
+  "message": "The given data was invalid.",
+  "errors": {
+    "source": [
+      "The selected source is invalid."
+    ]
+  }
+}
+
+
+--------------------------------------------------------------------------------
+NOTES FOR BOXILAUSHINDI PORTAL
+--------------------------------------------------------------------------------
+- Always send source as mixx_app or yas_app based on where the customer was redirected from.
+- Use status first to show free box active/inactive, then call open only when active.
+- request_id on open is optional; if sent, repeating the same request_id returns the same result (safe retry).
+- Free opens reset every calendar day (Africa/Dar_es_Salaam timezone).

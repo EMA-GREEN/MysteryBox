@@ -1,0 +1,51 @@
+Yas Free Box - Important Implementation Tasks
+=============================================
+Project: MysteryBox
+
+
+--------------------------------------------------------------------------------
+EPIC: MB-FB-000 | Yas Free Box (Mixx App / Yas App)
+--------------------------------------------------------------------------------
+Offer a free mystery box on Boxilaushindi for customers redirected from Mixx App
+or Yas App: 2 free opens per phone number per day, up to 6 winners per day at
+TSh 5,000 each (every 500th open), paid via existing wallet payout; Yas covers cost.
+
+
+--------------------------------------------------------------------------------
+DONE on 15/06/2026
+--------------------------------------------------------------------------------
+
+MB-FB-1 | Agree how the free box should work
+Confirm 2 free opens/day, every 500th open wins (max 6), prize TSh 5,000, Yas
+covers cost, and support Mixx App then Yas App.
+Status: DONE | Completed: 15/06/2026
+
+MB-FB-2 | Plan how free opens and winners are tracked
+Decide daily open counting, recording each free open, which app the customer
+came from, and stopping after 2 free opens.
+Status: DONE | Completed: 15/06/2026
+
+MB-FB-3 | Agree what Boxilaushindi portal needs from the backend
+Define how the portal checks remaining free opens, opens the free box, and
+reports Mixx App vs Yas App.
+Status: DONE | Completed: 15/06/2026
+
+
+--------------------------------------------------------------------------------
+DONE on 16/09/2026
+--------------------------------------------------------------------------------
+
+MB-FB-4 | Set up free-box settings and records
+Add the free box to product settings and create records for daily opens,
+customer usage, and winners.
+Status: DONE | Completed: 16/09/2026
+
+MB-FB-5 | Build free-box check, open, and prize payment
+Let Boxilaushindi check remaining opens, open the free box, apply the winner
+rule, and pay TSh 5,000 via the existing wallet process.
+Status: DONE | Completed: 16/09/2026
+
+MB-FB-6 | Share free-box API details with Boxilaushindi portal
+Share check and open API samples with Boxilaushindi (portal for Mixx/Yas App
+redirects) for integration and testing.
+Status: DONE | Completed: 16/09/2026

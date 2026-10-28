@@ -1,0 +1,120 @@
+- Similar to Subscriber Model create RenewalSubscriber Model with below details;
+mysql> desc renewal_subscribers;
++-----------------------------+---------------------------+------+-----+-------------------+-------------------+
+| Field                       | Type                      | Null | Key | Default           | Extra             |
++-----------------------------+---------------------------+------+-----+-------------------+-------------------+
+| id                          | bigint unsigned           | NO   | PRI | NULL              | auto_increment    |
+| msisdn                      | bigint                    | NO   | UNI | NULL              |                   |
+| activity_status             | enum('ACTIVE','INACTIVE') | NO   | MUL | ACTIVE            |                   |
+| dnd_status                  | enum('ON','OFF')          | NO   | MUL | OFF               |                   |
+| priority                    | int                       | YES  | MUL | 1                 |                   |
+| retry_status                | varchar(60)               | YES  |     | NULL              |                   |
+| retry_count                 | int                       | YES  |     | NULL              |                   |
+| publish_status              | tinyint(1)                | NO   | MUL | 0                 |                   |
+| last_renewal_billing        | datetime                  | YES  |     | NULL              |                   |
+| next_retrial_period         | datetime                  | YES  |     | NULL              |                   |
+| record_date                 | timestamp                 | NO   | MUL | CURRENT_TIMESTAMP | DEFAULT_GENERATED |
++-----------------------------+---------------------------+------+-----+-------------------+-------------------+
+
+- Consider below queries which will be used on the above table, create indexes accordingly
+$sql = "SELECT id,msisdn,retry_status,retry_count FROM renewal_subscribers WHERE activity_status = 'ACTIVE' AND dnd_status = 'OFF' AND retry_count < $retryCount AND publish_status = 0 AND (last_renewal_billing < (NOW() - INTERVAL 1 WEEK) OR last_renewal_billing IS NULL) ORDER by id ASC LIMIT $limit";
+
+$sql = "SELECT id,msisdn,retry_status,retry_count FROM renewal_subscribers WHERE activity_status = 'ACTIVE' AND dnd_status = 'OFF' AND retry_count < $retryCount AND publish_status = 0 AND DATE(last_renewal_billing) < CURDATE() AND last_renewal_billing >= (NOW() - INTERVAL 1 WEEK) ORDER by id ASC LIMIT $limit";
+
+$sql = "UPDATE renewal_subscribers SET publish_status = 1, `retry_count` =   `retry_count` + 1 WHERE id IN ({$id})";
+
+- Similar to Payment Model create RenewalPayment Model with below details and make all necessary indexes accordingly;
+mysql> desc renewal_payments;
++------------------------+-----------------+------+-----+---------+----------------+
+| Field                  | Type            | Null | Key | Default | Extra          |
++------------------------+-----------------+------+-----+---------+----------------+
+| id                     | bigint unsigned | NO   | PRI | NULL    | auto_increment |
+| msisdn                 | varchar(255)    | NO   | MUL | NULL    |                |
+| request_id             | varchar(255)    | NO   | UNI | NULL    |                |
+| payment_type           | varchar(255)    | NO   | MUL | NULL    |                |
+| amount                 | decimal(10,2)   | NO   |     | NULL    |                |
+| status                 | varchar(255)    | NO   |     | pending |                |
+| ack_status_code        | varchar(255)    | YES  |     | NULL    |                |
+| ack_description        | varchar(255)    | YES  |     | NULL    |                |
+| callback_status_code   | varchar(255)    | YES  |     | NULL    |                |
+| callback_description   | varchar(255)    | YES  |     | NULL    |                |
+| ack_received_time      | timestamp       | YES  | MUL | NULL    |                |
+| callback_received_time | timestamp       | YES  | MUL | NULL    |                |
+| created_at             | timestamp       | YES  |     | NULL    |                |
+| updated_at             | timestamp       | YES  |     | NULL    |                |
++------------------------+-----------------+------+-----+---------+----------------+
+
+- Add renewal_payments to archive_critical_tables.sh
+
+- Make a Model called RenewalContentNotification Model with below details and make all necessary indexes accordingly;
+mysql> desc renewal_content_notifications;
++----------------+---------------+------+-----+-------------------+-------------------+
+| Field          | Type          | Null | Key | Default           | Extra             |
++----------------+---------------+------+-----+-------------------+-------------------+
+| id             | bigint        | NO   | PRI | NULL              | auto_increment    |
+| msisdn         | bigint        | YES  | MUL | NULL              |                   |
+| request_id     | varchar(1000) | NO   |     | NULL              |                   |
+| payment_type   | varchar(1000) | YES  |     | NULL              |                   |
+| text           | varchar(1000) | YES  |     | NULL              |                   |
+| publish_status | tinyint(1)    | NO   | MUL | 0                 |                   |
+| created_at     | timestamp     | YES  |     | NULL              |                   |
+| updated_at     | timestamp     | YES  |     | NULL              |                   |
++----------------+---------------+------+-----+-------------------+-------------------+
+
+- Add renewal_content_notifications to archive_critical_tables.sh
+
+- Make a command called RenewalReset that will be scheduled via cronjob say and 23:45 hours that It will do below;
+  $sql = "UPDATE renewal_subscribers SET publish_status = 1"; 
+
+- Make a command called RenewalReload that will be scheduled via cronjob say at 00:01 hours that It will do below;
+  $sql = "truncate renewal_subscribers";//first flush the renewal base table
+  Then pick msisdns with activity_status='ACTIVE' and dnd_status='OFF' from subscribers table(Interaction base table) order by last_renewal_billing desc and load them to renewal_subscribers table(Renewal base table)
+
+- For all the publishers and consumers below use queue_settings.php config file and configure publisher.batch_size,publisher.queue_name,publisher.lock_name,consumer.queue_name,consumer.count and consumer.prefetch_count accordingly, also use connect() function for RabbitMQ connection same way for all
+
+- Similar to PaymentNotificationPublisher.php Command and its supervisor payment_notification_publisher.ini make a Publisher called RenewalPaymentPriorityPublisher.php that fetches records from renewal_subscribers, publish to queue using below creteria;
+  $sql = "SELECT id,msisdn,retry_status,retry_count FROM renewal_subscribers WHERE activity_status = 'ACTIVE' AND dnd_status = 'OFF' AND retry_count < $retryCount AND publish_status = 0 AND DATE(last_renewal_billing) < CURDATE() AND last_renewal_billing >= (NOW() - INTERVAL 1 WEEK) ORDER by id ASC LIMIT $limit";//selecting records
+  $sql = "UPDATE renewal_subscribers SET publish_status = 1, `retry_count` =   `retry_count` + 1 WHERE id IN ({$id})";//batch update records
+
+- Similar to PaymentNotificationConsumer.php Command and its supervisor payment_notification_consumer.ini make a Consumer called RenewalPaymentPriorityConsumer.php(numprocs=5) that consumes the above priority queue and perform below;
+   - Create renewal_payment record
+   - Send charging requests to the msisdn using sendChargeRequest function in YasPaymentService.php Service with $requestId = "MYBXR".$date.$msisdn; and obtain acknowledgement response
+   - Update renewal_payment record with acknowledgement details(Callback response which is the final response will be updated in Callback Consumer accordingly later)
+
+- Similar to above Renewal Publisher Command and its supervisor make another Publisher called RenewalPaymentLowPriorityPublisher.php that fetches records from renewal_subscribers, publish to queue using below creteria;
+  $sql = "SELECT id,msisdn,retry_status,retry_count FROM renewal_subscribers WHERE activity_status = 'ACTIVE' AND dnd_status = 'OFF' AND retry_count < $retryCount AND publish_status = 0 AND (last_renewal_billing < (NOW() - INTERVAL 1 WEEK) OR last_renewal_billing IS NULL) ORDER by id ASC LIMIT $limit";//selecting records
+  $sql = "UPDATE renewal_subscribers SET publish_status = 1, `retry_count` =   `retry_count` + 1 WHERE id IN ({$id})";//batch update records
+
+- Similar to above Renewal Publisher Command and its supervisor make a Consumer called RenewalPaymentLowPriorityConsumer.php(numprocs=10) that consumes the above low priority queue and perform below;
+   - Create renewal_payment record
+   - Send charging requests to the msisdn using sendChargeRequest function in YasPaymentService.php Service with $requestId = "MYBXR".$date.$msisdn; and obtain acknowledgement response
+   - Update renewal_payment record with acknowledgement details(Callback response which is the final response will be updated in Callback Consumer accordingly later)
+
+- For each of the above publishers RenewalPaymentPriorityPublisher.php and RenewalPaymentLowPriorityPublisher.php there should be N configurable retries(say 5) meaning script will initially publish whole base to queue for charging after it has charged the whole base then it starts the 1st retry, first to last msisdn until the whole base is complete then to 2nd retry up to the Nth configured retry(5th in this example). Here for Implementation check HalotelMegaPromoRenewalPublisher.php under Command to see  how it is implemented and check if it's the best approach and implement and adjust accordingly and concise
+
+- For each of the above consumers RenewalPaymentPriorityConsumer.php and RenewalPaymentLowPriorityConsumer.php there should be TPS control maximum TPS configurable say 100, Here for Implementation check TigoZaliRenewalsConsumer.php and implement accordingly and concise(Do not include TpsTracker Implementation add only TPS control/limit)
+
+
+/////////////////////START FROM HERE/////////////////////
+
+- Similar to PaymentCallbackPublisher.php Command and its supervisor payment_callback_publisher.ini make a publisher called RenewalPaymentCallbackPublisher.php that fetches records from renewal_payment_callbacks with publish_status=0, publish to queue and update publish_status=1 after publishing
+
+- Similar to PaymentCallbackConsumer.php and its supervisor payment_callback_consumer.ini make a consumer called RenewalPaymentCallbackConsumer.php(numprocs=15) that consumes from above queue and perform below;
+  - Update renewal_payments table with callback response details accordingly
+
+  - For success charging/payment perform below;
+    - Update last_renewal_billing of renewal_subscribers table, set retry_status='OFF'
+    - Update last_renewal_billing of subscribers table, increment total_renewal_billed_amount with the charged renewal amount
+    - Create new MysteryBoxAwardNotification with $boxType='Bronze', $requestId = "MYBXR".$date.$msisdn;, $status='awarded' and $publish_status=0 
+    - Get subscriber by msisdn and set $subscriber->last_awarded_box = $boxType; and $subscriber->save();
+
+- For none success charging/payment perform below;
+   - Update renewal_subscribers table set retry_status='ON', set publish_status=0
+
+  - For success charging/payment if current hour is between 08:00 hours to 23:59 hours send configured success_renewal_sms("Hongera umezawadiwa nafasi ya kufungua sanduku la Bronze, Tuma neno BOX na unaweza kujishindia zawaidi kemkem.") to the msisdn using SmsService.php Service
+    - Else if it is not between the above timeframe then insert the details renewal_content_notifications table so that the sms will be sent later when the time is right
+   
+- Make a publisher called RenewalContentNotificationPublisher.php Command with it's supervisor accordingly that fetches records from renewal_content_notifications table with publish_status=0, publish to queue and update publish_status=1
+
+- Make a consumer called RenewalContentNotificationConsumer.php(numprocs=5) Command that consumes from the above queue and peform below;
+  - Take msisdn and send configured success_renewal_sms to the msisdn

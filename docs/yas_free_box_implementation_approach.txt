@@ -1,0 +1,86 @@
+Yas Free Box - Implementation Approach
+======================================
+Project: MysteryBox
+Date: 2026-09-16
+
+SCOPE (CONFIRMED)
+-----------------
+- Extra FREE box shown first, then the 5 pay boxes, when customer comes from
+  Mixx App or Yas App (source=mixx_app | yas_app).
+- Each MSISDN gets 2 free opens per calendar day (Africa/Dar_es_Salaam), shared
+  across both apps.
+- Frontend marks free box inactive after 2 opens used that day.
+- Backend must still enforce the daily limit (never trust frontend alone).
+- Win rule is POSITION-BASED (not random %):
+  - Every Nth open of the day wins (default every 500th: 500, 1000, 1500, ...).
+  - Max N winners per day (default 6 => positions 500..3000).
+  - Shared daily open_index pool for Mixx App + Yas App.
+  - Prize amount for each position winner: TSh 5,000 (configurable).
+  - Track prize amounts for Yas compensation; openings store source for reporting.
+- Open via dedicated API: http://188.64.188.232/mysteryboxapi/router.php/api/yas/free-box/*
+- Payout via existing Payscoop flow; Yas reimburses.
+
+
+--------------------------------------------------------------------------------
+SOURCE / APP CATEGORY
+--------------------------------------------------------------------------------
+
+source values (required on status + open):
+  - yas_app   → Yas App (enabled now)
+  - mixx_app  → Mixx App (disabled for now; set sources.mixx_app.enabled=true later)
+
+Configured in config/yas_free_box.php under 'sources'.
+Each can be enabled/disabled independently.
+Stored on yas_free_box_openings.source for audit / Yas reporting.
+
+
+--------------------------------------------------------------------------------
+DATA STORAGE
+--------------------------------------------------------------------------------
+
+TABLE A: yas_free_box_daily_counters
+- open_date (unique), open_count, winners_count, total_prize_amount
+
+TABLE B: yas_free_box_openings
+- msisdn, source (mixx_app|yas_app), open_date, open_index, user_open_number,
+  is_winner, prize_amount, prize_type, status, reference_id, request_id
+
+TABLE C: yas_free_box_daily_usage
+- msisdn, open_date, opens_used (max 2; unique msisdn+open_date)
+
+
+--------------------------------------------------------------------------------
+CONFIGURATION
+--------------------------------------------------------------------------------
+
+File: config/yas_free_box.php
+Env: YAS_FREE_BOX_ENABLED, YAS_FREE_BOX_DAILY_OPENS, YAS_FREE_BOX_WIN_INTERVAL,
+     YAS_FREE_BOX_MAX_WINNERS, YAS_FREE_BOX_PRIZE_AMOUNT, YAS_FREE_BOX_DAILY_BUDGET
+
+boxes.php type '6': name YasFree, yas_free=true, sources=[mixx_app, yas_app]
+
+
+--------------------------------------------------------------------------------
+API ENDPOINTS
+--------------------------------------------------------------------------------
+
+GET|POST http://188.64.188.232/mysteryboxapi/router.php/api/yas/free-box/status
+  Request: msisdn, source (yas_app for now; mixx_app later)
+  Response: free_box_active, opens_used/remaining, daily_limit, source, source_label, boxes
+
+POST http://188.64.188.232/mysteryboxapi/router.php/api/yas/free-box/open
+  Request: msisdn, source (yas_app for now), request_id?
+  Response: result win|loss, open_index, prize_amount, opens_remaining, source, message
+
+
+--------------------------------------------------------------------------------
+YAS COMPENSATION QUERY
+--------------------------------------------------------------------------------
+
+SELECT open_date, source,
+       COUNT(*) AS total_opens,
+       SUM(is_winner) AS winners,
+       SUM(prize_amount) AS total_prize_to_compensate
+FROM yas_free_box_openings
+WHERE open_date BETWEEN ? AND ?
+GROUP BY open_date, source;

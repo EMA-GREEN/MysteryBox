@@ -1,0 +1,109 @@
+Yas Free Box - Jira Tasks (5-Day Sprint)
+========================================
+Project: MysteryBox
+Date: 2026-08-10
+
+Display rules:
+- First Mixx visit: 6 boxes (1 free Yas + 5 pay)
+- Later visits: 5 pay boxes only
+
+--------------------------------------------------------------------------------
+EPIC: Yas Free Box Design & Data - Day 1
+--------------------------------------------------------------------------------
+
+MB-1 | Confirm Yas free-box rules
+One free open per subscriber via APP when source=mixx_app|yas_app; separate prizes from normal boxes.
+
+MB-2 | Create Mixx prizes table
+Store Yas-managed prize amounts, probabilities, and enable flags.
+
+MB-3 | Create Mixx eligibility / usage table
+Track per-MSISDN free-box eligibility and first-open used status.
+
+MB-4 | Add Yas free box type in config
+Register Yas Free Box separately from Bronze/Silver and other pay boxes.
+
+MB-5 | Agree APP source=mixx_app|yas_app handoff
+Confirm how Mixx App passes source so portal/API can detect first vs later visit.
+
+--------------------------------------------------------------------------------
+EPIC: Mixx Award, Open & Payout - Day 2
+--------------------------------------------------------------------------------
+
+MB-6 | Award free Yas free box on first Mixx visit
+If source=mixx_app|yas_app and unused, create/award free Yas free box alongside 5 pay boxes.
+
+MB-7 | Implement Mixx-specific open flow
+Open free Yas free box without payment using separate prize engine.
+
+MB-8 | Select Mixx prize by probability
+Pick prize from Mixx prize config according to configured probabilities.
+
+MB-9 | Mark free Yas free box as used after open
+Update eligibility so free box is not offered again.
+
+MB-10 | Wire Mixx prize disbursement
+Send airtime/wallet payout for Yas free-box wins via existing disbursement path.
+
+MB-11 | Keep 5 pay boxes available always
+Ensure pay boxes remain listed on first and later Mixx visits.
+
+--------------------------------------------------------------------------------
+EPIC: Yas Admin Prize Control - Day 3
+--------------------------------------------------------------------------------
+
+MB-12 | Add Yas staff permission for Mixx prizes
+Restrict Mixx prize management to authorized Yas/admin staff.
+
+MB-13 | Implement Mixx prize list API
+Return configured Mixx prizes with amounts, probabilities, and status.
+
+MB-14 | Implement Mixx prize create/update API
+Allow Yas to add/edit prize amount, probability, and enable/disable.
+
+MB-15 | Add audit log for Mixx prize changes
+Record who changed which Mixx prize config and when.
+
+MB-16 | Provide admin UI or API usage docs
+Simple admin screens or Postman-ready docs for Yas team.
+
+--------------------------------------------------------------------------------
+EPIC: Portal UX (6 then 5) - Day 4
+--------------------------------------------------------------------------------
+
+MB-17 | Detect source=mixx_app|yas_app on portal load
+Identify Mixx App visits and drive box listing from eligibility state.
+
+MB-18 | First Mixx visit shows 6 boxes
+Display 1 free Yas free box + 5 pay boxes for eligible first visit.
+
+MB-19 | Later Mixx visits show 5 pay boxes
+Hide free Yas free box after it has been used; show pay boxes only.
+
+MB-20 | Handle free-box used / ineligible states
+Return clear status when free Yas free box is already used or not available.
+
+MB-21 | Align portal box APIs for Mixx listing
+Ensure box-list endpoint returns 6 or 5 boxes based on Mixx eligibility.
+
+--------------------------------------------------------------------------------
+EPIC: Test, UAT & Go-Live - Day 5
+--------------------------------------------------------------------------------
+
+MB-22 | E2E first Mixx visit flow
+Verify first visit shows 6 boxes, free open works, prize is awarded.
+
+MB-23 | E2E later Mixx visit flow
+Verify later visit shows only 5 pay boxes and free box is not shown.
+
+MB-24 | Regression non-Mixx path
+Confirm SMS/APP non-Yas free box flows remain unchanged.
+
+MB-25 | UAT with Yas and APP teams
+Walk through first/later visit, prize admin, and payout with stakeholders.
+
+MB-26 | Deploy and smoke Mixx payouts
+Ship to production and smoke-check award, open, and disbursement.
+
+MB-27 | Monitor Yas free-box logs
+Watch eligibility, open, prize selection, and payout errors post go-live.

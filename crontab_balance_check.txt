@@ -1,0 +1,31 @@
+# Crontab entry for CheckDisbursementBalance command
+# This runs every 15 minutes to check disbursement account balance and send alerts
+
+# Option 1: Basic (no logging)
+*/15 * * * * cd /var/www/html/MysteryBox && php artisan balance:check-disbursement >> /dev/null 2>&1
+
+# Option 2: With logging (recommended)
+*/15 * * * * cd /var/www/html/MysteryBox && php artisan balance:check-disbursement >> /var/www/html/MysteryBox/storage/logs/balance-check.log 2>&1
+
+# Option 3: With date-based log file (creates separate log per day)
+*/15 * * * * cd /var/www/html/MysteryBox && php artisan balance:check-disbursement >> /var/www/html/MysteryBox/storage/logs/balance-check-$(date +\%Y-\%m-\%d).log 2>&1
+
+# Option 4: With full path to PHP (if PHP is not in system PATH)
+*/15 * * * * cd /var/www/html/MysteryBox && /usr/bin/php artisan balance:check-disbursement >> /var/www/html/MysteryBox/storage/logs/balance-check.log 2>&1
+
+# To add to crontab:
+# 1. Copy one of the lines above (recommend Option 2 or 3)
+# 2. Run: crontab -e
+# 3. Paste the line
+# 4. Save and exit
+
+# To verify cron is working:
+# tail -f /var/log/cron
+# tail -f /var/www/html/MysteryBox/storage/logs/balance-check.log
+
+# Configuration:
+# - Threshold: Set in config/balance_monitoring.php or via BALANCE_THRESHOLD env variable (default: 200000)
+# - Notification MSISDNs: Configured in config/balance_monitoring.php
+# - Cooldown: Set via BALANCE_NOTIFICATION_COOLDOWN env variable (default: 60 minutes)
+# - Lookback: Set via BALANCE_CHECK_LOOKBACK env variable (default: 30 minutes)
+

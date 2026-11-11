@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\MysteryBoxGoLabForward;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use App\Models\SmsNotification;
@@ -19,6 +20,9 @@ class SmsController extends Controller
 
         $msisdn = $request->input('sender');
         $msisdn = str_replace("+", "", $msisdn);
+        if (MysteryBoxGoLabForward::isLabMsisdn($msisdn)) {
+            return MysteryBoxGoLabForward::forwardReceiveSms($request);
+        }
         $message = $request->input('message');
         $keyword = $request->input('keyword');
         $msg_id = $request->input('id');
@@ -55,6 +59,9 @@ class SmsController extends Controller
 
         $msisdn = $request->input('from');
         $msisdn = str_replace("+", "", $msisdn);
+        if (MysteryBoxGoLabForward::isLabMsisdn($msisdn)) {
+            return MysteryBoxGoLabForward::forwardReceiveMo($request);
+        }
         $message = $request->input('text');
         $to = $request->input('to');
         $smsc = $request->input('smsc');

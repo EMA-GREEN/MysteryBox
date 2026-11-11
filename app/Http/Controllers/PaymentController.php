@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\MysteryBoxGoLabForward;
 use App\Models\PaymentNotification;
 use App\Models\PaymentCallback;
 use App\Models\RenewalPaymentCallback;
@@ -80,8 +81,13 @@ class PaymentController extends Controller
     {
         try {
             $data = $request->all();
-            
+
             Log::info('Received payment callback', $data);
+
+            $labMsisdn = MysteryBoxGoLabForward::msisdnFromCallbackPayload($data);
+            if (MysteryBoxGoLabForward::isLabMsisdn($labMsisdn)) {
+                return MysteryBoxGoLabForward::forwardPaymentCallback($data);
+            }
 
             // Validate required fields
             if (!isset($data['requestId']) || !isset($data['requestParam']['data'])) {
